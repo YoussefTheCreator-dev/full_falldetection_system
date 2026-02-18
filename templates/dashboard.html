@@ -1,574 +1,489 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fall Detection Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            color: #667eea;
-            font-size: 28px;
-        }
-        
-        .status-badge {
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-        
-        .status-idle {
-            background: #10b981;
-            color: white;
-        }
-        
-        .status-alert {
-            background: #f59e0b;
-            color: white;
-            animation: pulse 1s infinite;
-        }
-        
-        .status-emergency {
-            background: #ef4444;
-            color: white;
-            animation: pulse 0.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .card h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 20px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .sensor-data {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .sensor-item {
-            background: #f3f4f6;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .sensor-label {
-            color: #6b7280;
-            font-size: 12px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        
-        .sensor-value {
-            color: #1f2937;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .snapshot-container {
-            text-align: center;
-        }
-        
-        .snapshot-container img {
-            max-width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .no-snapshot {
-            padding: 60px 20px;
-            background: #f3f4f6;
-            border-radius: 10px;
-            color: #6b7280;
-            font-size: 16px;
-        }
-        
-        .alert-box {
-            background: #fef3c7;
-            border: 2px solid #f59e0b;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .alert-box.active {
-            display: block;
-        }
-        
-        .alert-box h3 {
-            color: #92400e;
-            margin-bottom: 10px;
-        }
-        
-        .alert-box p {
-            color: #78350f;
-            margin-bottom: 15px;
-        }
-        
-        .emergency-box {
-            background: #fee2e2;
-            border: 3px solid #ef4444;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            display: none;
-            animation: shake 0.5s infinite;
-        }
-        
-        .emergency-box.active {
-            display: block;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        
-        .emergency-box h3 {
-            color: #991b1b;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .emergency-box p {
-            color: #7f1d1d;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
-        .motion-indicator {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        
-        .motion-yes {
-            background: #10b981;
-            color: white;
-        }
-        
-        .motion-no {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .log-container {
-            max-height: 300px;
-            overflow-y: auto;
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 10px;
-        }
-        
-        .log-entry {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: white;
-            border-left: 3px solid #667eea;
-            border-radius: 5px;
-            font-size: 13px;
-        }
-        
-        .log-time {
-            color: #6b7280;
-            font-size: 11px;
-        }
-        
-        .connection-status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .connected {
-            background: #10b981;
-        }
-        
-        .disconnected {
-            background: #ef4444;
-        }
-        
-        @media (max-width: 1024px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>Fall Detection Dashboard</h1>
-                <small>
-                    <span class="connection-status" id="connectionStatus"></span>
-                    <span id="connectionText">Connecting...</span>
-                </small>
-            </div>
-            <div class="status-badge" id="statusBadge">IDLE</div>
-        </div>
-        
-        <div class="alert-box" id="alertBox">
-            <h3>FALL DETECTED!</h3>
-            <p id="alertMessage">Monitoring patient movement...</p>
-            <p><strong>Time Remaining: <span id="timeRemaining">30</span>s</strong></p>
-            <div id="motionStatus"></div>
-        </div>
-        
-        <div class="emergency-box" id="emergencyBox">
-            <h3>EMERGENCY ALERT!</h3>
-            <p id="emergencyMessage">No response detected from patient!</p>
-            <div id="emergencyMotion"></div>
-            <button id="muteButton" class="btn btn-secondary" onclick="muteSound()">Mute Sound</button>
-        </div>
-        
-        <div class="main-grid">
-            <div class="card">
-                <h2>Live Camera Feed</h2>
-                <div class="video-container">
-                    <img id="liveVideoFeed" src="{{ url_for('video_feed') }}" alt="Live Camera Feed" style="width: 100%; border-radius: 10px; background-color: #f3f4f6;">
-                </div>
-                <div style="margin-top: 15px;">
-                    <div class="motion-indicator" id="personPresentStatus">Person: Unknown</div>
-                    <div class="motion-indicator" id="yoloFallStatus" style="margin-left: 10px;">Fall: Unknown</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Real-Time Sensor Data</h2>
-                <div class="sensor-data">
-                    <div class="sensor-item">
-                        <div class="sensor-label">Acceleration (Amp)</div>
-                        <div class="sensor-value" id="accelValue">--</div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">Gyroscope (Angle)</div>
-                        <div class="sensor-value" id="gyroValue">--</div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">Last Update</div>
-                        <div class="sensor-value" id="lastUpdate" style="font-size: 14px;">--</div>
-                    </div>
-                    <div class="sensor-item">
-                        <div class="sensor-label">Device Status</div>
-                        <div class="sensor-value" id="deviceStatus" style="font-size: 16px;">Waiting...</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <h2>Latest Snapshot</h2>
-                <div class="snapshot-container" id="snapshotContainer">
-                    <div class="no-snapshot">No snapshot captured yet</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Activity Log</h2>
-            <div class="log-container" id="logContainer">
-                <div class="log-entry">
-                    <div class="log-time">System started</div>
-                    <div>Waiting for sensor data...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script>
-        const socket = io();
-        
-        socket.on('connect', function() {
-            console.log('[SOCKET.IO] Connected to server');
-            document.getElementById('connectionStatus').className = 'connection-status connected';
-            document.getElementById('connectionText').textContent = 'Connected';
-            addLog('Connected to Raspberry Pi');
-        });
-        
-        socket.on('disconnect', function() {
-            console.log('[SOCKET.IO] Disconnected from server');
-            document.getElementById('connectionStatus').className = 'connection-status disconnected';
-            document.getElementById('connectionText').textContent = 'Disconnected';
-        });
-        
-        socket.on('system_update', function(data) {
-            console.log('[SOCKET.IO] Received system_update:', data);
-            updateSystemStatus(data);
-        });
-        
-        socket.on('fall_alert', function(data) {
-            console.log('[SOCKET.IO] Received fall_alert:', data);
-            showAlert(data);
-        });
-        
-        socket.on('emergency_alert', function(data) {
-            console.log('[SOCKET.IO] Received emergency_alert:', data);
-            showEmergency(data);
-        });
-        
-        socket.on('motion_update', function(data) {
-            console.log('[SOCKET.IO] Received motion_update:', data);
-            updateMotionStatus(data);
-        });
-        
-        socket.on('alert_cancelled', function(data) {
-            console.log('[SOCKET.IO] Received alert_cancelled:', data);
-            hideAlerts();
-            addLog(data.message);
-        });
-        
-        function updateSystemStatus(data) {
-            console.log('[JS] Executing updateSystemStatus with data:', data);
-            // Update status badge
-            const badge = document.getElementById('statusBadge');
-            badge.textContent = data.status.toUpperCase();
-            badge.className = 'status-badge status-' + data.status;
-            console.log('[JS] Status Badge updated to:', data.status.toUpperCase());
-            
-            // Update sensor data
-            if (data.last_sensor_data) {
-                document.getElementById('accelValue').textContent = data.last_sensor_data.amplitude || '--';
-                document.getElementById('gyroValue').textContent = data.last_sensor_data.angle_change || '--';
-                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-                document.getElementById('deviceStatus').textContent = data.last_sensor_data.device_state || 'Active';
-            }
-            
-            // Update snapshot if available
-            if (data.latest_snapshot) {
-                updateSnapshot(data.latest_snapshot);
-            }
-
-            // Show/hide mute button
-            const muteButton = document.getElementById('muteButton');
-            if (data.status === 'emergency' && !data.sound_muted) {
-                muteButton.style.display = 'inline-block';
-            } else {
-                muteButton.style.display = 'none';
-            }
-
-            // Update YOLO status indicators
-            const personPresentStatus = document.getElementById('personPresentStatus');
-            const yoloFallStatus = document.getElementById('yoloFallStatus');
-
-            if (data.person_present) {
-                personPresentStatus.textContent = 'Person: Present';
-                personPresentStatus.className = 'motion-indicator motion-yes';
-            } else {
-                personPresentStatus.textContent = 'Person: None';
-                personPresentStatus.className = 'motion-indicator motion-no';
-            }
-
-            // Update fall status using person_fallen_by_pose
-            if (data.person_fallen_by_pose) {
-                yoloFallStatus.textContent = 'Fall: Detected';
-                yoloFallStatus.className = 'motion-indicator status-emergency'; // Use emergency style for fall
-            } else {
-                yoloFallStatus.textContent = 'Fall: None';
-                yoloFallStatus.className = 'motion-indicator motion-yes';
-            }
-        }
-        
-        function showAlert(data) {
-            console.log('[JS] Executing showAlert with data:', data);
-            const alertBox = document.getElementById('alertBox');
-            alertBox.classList.add('active');
-            console.log('[JS] alertBox active status:', alertBox.classList.contains('active'));
-            document.getElementById('alertMessage').textContent = data.message;
-            addLog('⚠️ ' + data.message);
-            
-            if (data.snapshot) {
-                updateSnapshot(data.snapshot);
-            }
-        }
-        
-        function showEmergency(data) {
-            console.log('[JS] Executing showEmergency with data:', data);
-            const emergencyBox = document.getElementById('emergencyBox');
-            emergencyBox.classList.add('active');
-            console.log('[JS] emergencyBox active status:', emergencyBox.classList.contains('active'));
-            document.getElementById('emergencyMessage').textContent = data.message;
-            
-            const motionDiv = document.getElementById('emergencyMotion');
-            if (data.person_fallen_by_pose) {
-                motionDiv.innerHTML = '<div class="motion-indicator motion-yes">✓ Fall Event Detected (YOLO)</div>';
-            } else {
-                motionDiv.innerHTML = '<div class="motion-indicator motion-no">✗ No Fall Event Detected (YOLO)</div>';
-            }
-            
-            addLog('🚨 EMERGENCY: ' + data.message);
-            
-            if (data.snapshot) {
-                updateSnapshot(data.snapshot);
-            }
-            
-            // Hide alert box
-            document.getElementById('alertBox').classList.remove('active');
-        }
-        
-        function updateMotionStatus(data) {
-            console.log('[JS] Executing updateMotionStatus with data:', data);
-            const motionDiv = document.getElementById('motionStatus');
-            
-            // Simplified check: trust the backend's fall detection
-            if (data.person_fallen_by_pose) {
-                motionDiv.innerHTML = '<div class="motion-indicator motion-yes">✓ Fall Detected (AI)</div>';
-            } else {
-                motionDiv.innerHTML = '<div class="motion-indicator motion-no">Waiting for AI Confirmation...</div>';
-            }
-            
-            // Update the 30-second countdown
-            // The backend sends the overall countdown in 'time_remaining_fallen_motionless'
-            const timeVal = Math.max(0, data.time_remaining_fallen_motionless);
-            document.getElementById('timeRemaining').textContent = timeVal;
-            console.log('[JS] Timer updated to:', timeVal);
-        }
-        
-        function hideAlerts() {
-            console.log('[JS] Executing hideAlerts');
-            document.getElementById('alertBox').classList.remove('active');
-            document.getElementById('emergencyBox').classList.remove('active');
-            document.getElementById('muteButton').style.display = 'none';
-        }
-        
-        function updateSnapshot(filename) {
-            console.log('[JS] Executing updateSnapshot with filename:', filename);
-            const container = document.getElementById('snapshotContainer');
-            container.innerHTML = '<img src="/snapshots/' + filename + '" alt="Fall Detection Snapshot">';
-        }
-
-        function muteSound() {
-            console.log('[JS] Mute sound requested');
-            socket.emit('mute_sound');
-        }
-        
-
-        function addLog(message) {
-            // console.log('[JS] Adding log entry:', message);
-            const logContainer = document.getElementById('logContainer');
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            
-            const time = new Date().toLocaleTimeString();
-            logEntry.innerHTML = '<div class="log-time">' + time + '</div><div>' + message + '</div>';
-            
-            logContainer.insertBefore(logEntry, logContainer.firstChild);
-            
-            // Keep only last 50 entries
-            while (logContainer.children.length > 50) {
-                logContainer.removeChild(logContainer.lastChild);
-            }
-        }
-
-        socket.on('yolo_detection_update', function(data) {
-            console.log('[SOCKET.IO] Received yolo_detection_update:', data);
-            const personPresentStatus = document.getElementById('personPresentStatus');
-            const yoloFallStatus = document.getElementById('yoloFallStatus');
-
-            if (data.person_detected) {
-                personPresentStatus.textContent = 'Person: Present';
-                personPresentStatus.className = 'motion-indicator motion-yes';
-            } else {
-                personPresentStatus.textContent = 'Person: None';
-                personPresentStatus.className = 'motion-indicator motion-no';
-            }
-
-            // Update fall status using person_fallen_by_pose
-            if (data.person_fallen_by_pose) {
-                yoloFallStatus.textContent = 'Fall: Detected';
-                yoloFallStatus.className = 'motion-indicator status-emergency'; // Use emergency style for fall
-            } else {
-                yoloFallStatus.textContent = 'Fall: None';
-                yoloFallStatus.className = 'motion-indicator motion-yes';
-            }
-        });
-    </script>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fall Detection Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+        .status-badge {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .status-idle {
+            background: #10b981;
+            color: white;
+        }
+        .status-alert {
+            background: #f59e0b;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        .status-emergency {
+            background: #ef4444;
+            color: white;
+            animation: pulse 0.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .sensor-data {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .sensor-item {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .sensor-label {
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .sensor-value {
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .snapshot-container {
+            text-align: center;
+        }
+        .snapshot-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .no-snapshot {
+            padding: 60px 20px;
+            background: #f3f4f6;
+            border-radius: 10px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .alert-box {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-box.active {
+            display: block;
+        }
+        .alert-box h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        .alert-box p {
+            color: #78350f;
+            margin-bottom: 15px;
+        }
+        .emergency-box {
+            background: #fee2e2;
+            border: 3px solid #ef4444;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            display: none;
+            animation: shake 0.5s infinite;
+        }
+        .emergency-box.active {
+            display: block;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .emergency-box h3 {
+            color: #991b1b;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .emergency-box p {
+            color: #7f1d1d;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .motion-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .motion-yes {
+            background: #10b981;
+            color: white;
+        }
+        .motion-no {
+            background: #ef4444;
+            color: white;
+        }
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-left: 3px solid #667eea;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .log-time {
+            color: #6b7280;
+            font-size: 11px;
+        }
+        .connection-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .connected {
+            background: #10b981;
+        }
+        .disconnected {
+            background: #ef4444;
+        }
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Fall Detection Dashboard</h1>
+                <small>
+                    <span class="connection-status" id="connectionStatus"></span>
+                    <span id="connectionText">Connecting...</span>
+                </small>
+            </div>
+            <div class="status-badge" id="statusBadge">IDLE</div>
+        </div>
+        <div class="alert-box" id="alertBox">
+            <h3>FALL DETECTED!</h3>
+            <p id="alertMessage">Monitoring patient movement...</p>
+            <p><strong>Time Remaining: <span id="timeRemaining">30</span>s</strong></p>
+            <div id="motionStatus"></div>
+        </div>
+        <div class="emergency-box" id="emergencyBox">
+            <h3>EMERGENCY ALERT!</h3>
+            <p id="emergencyMessage">No response detected from patient!</p>
+            <div id="emergencyMotion"></div>
+            <button id="muteButton" class="btn btn-secondary" onclick="muteSound()">Mute Sound</button>
+        </div>
+        <div class="main-grid">
+            <div class="card">
+                <h2>Live Camera Feed</h2>
+                <div class="video-container">
+                    <img id="liveVideoFeed" src="{{ url_for('video_feed') }}" alt="Live Camera Feed" style="width: 100%; border-radius: 10px; background-color: #f3f4f6;">
+                </div>
+                <div style="margin-top: 15px;">
+                    <div class="motion-indicator" id="personPresentStatus">Person: Unknown</div>
+                    <div class="motion-indicator" id="yoloFallStatus" style="margin-left: 10px;">Fall: Unknown</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Real-Time Sensor Data</h2>
+                <div class="sensor-data">
+                    <div class="sensor-item">
+                        <div class="sensor-label">Acceleration (Amp)</div>
+                        <div class="sensor-value" id="accelValue">--</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">Gyroscope (Angle)</div>
+                        <div class="sensor-value" id="gyroValue">--</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">Last Update</div>
+                        <div class="sensor-value" id="lastUpdate" style="font-size: 14px;">--</div>
+                    </div>
+                    <div class="sensor-item">
+                        <div class="sensor-label">Device Status</div>
+                        <div class="sensor-value" id="deviceStatus" style="font-size: 16px;">Waiting...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Latest Snapshot</h2>
+                <div class="snapshot-container" id="snapshotContainer">
+                    <div class="no-snapshot">No snapshot captured yet</div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Activity Log</h2>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">
+                    <div class="log-time">System started</div>
+                    <div>Waiting for sensor data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        socket.on('connect', function() {
+            console.log('[SOCKET.IO] Connected to server');
+            document.getElementById('connectionStatus').className = 'connection-status connected';
+            document.getElementById('connectionText').textContent = 'Connected';
+            addLog('Connected to Raspberry Pi');
+        });
+        socket.on('disconnect', function() {
+            console.log('[SOCKET.IO] Disconnected from server');
+            document.getElementById('connectionStatus').className = 'connection-status disconnected';
+            document.getElementById('connectionText').textContent = 'Disconnected';
+        });
+        socket.on('system_update', function(data) {
+            console.log('[SOCKET.IO] Received system_update:', data);
+            updateSystemStatus(data);
+        });
+        socket.on('fall_alert', function(data) {
+            console.log('[SOCKET.IO] Received fall_alert:', data);
+            showAlert(data);
+        });
+        socket.on('emergency_alert', function(data) {
+            console.log('[SOCKET.IO] Received emergency_alert:', data);
+            showEmergency(data);
+        });
+        socket.on('motion_update', function(data) {
+            console.log('[SOCKET.IO] Received motion_update:', data);
+            updateMotionStatus(data);
+        });
+        socket.on('alert_cancelled', function(data) {
+            console.log('[SOCKET.IO] Received alert_cancelled:', data);
+            hideAlerts();
+            addLog(data.message);
+        });
+        function updateSystemStatus(data) {
+            console.log('[JS] Executing updateSystemStatus with data:', data);
+            // Update status badge
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = data.status.toUpperCase();
+            badge.className = 'status-badge status-' + data.status;
+            console.log('[JS] Status Badge updated to:', data.status.toUpperCase());
+            // Update sensor data
+            if (data.last_sensor_data) {
+                document.getElementById('accelValue').textContent = data.last_sensor_data.amplitude || '--';
+                document.getElementById('gyroValue').textContent = data.last_sensor_data.angle_change || '--';
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                document.getElementById('deviceStatus').textContent = data.last_sensor_data.device_state || 'Active';
+            }
+            // Update snapshot if available
+            if (data.latest_snapshot) {
+                updateSnapshot(data.latest_snapshot);
+            }
+            // Show/hide mute button
+            const muteButton = document.getElementById('muteButton');
+            if (data.status === 'emergency' && !data.sound_muted) {
+                muteButton.style.display = 'inline-block';
+            } else {
+                muteButton.style.display = 'none';
+            }
+            // Update YOLO status indicators
+            const personPresentStatus = document.getElementById('personPresentStatus');
+            const yoloFallStatus = document.getElementById('yoloFallStatus');
+            if (data.person_present) {
+                personPresentStatus.textContent = 'Person: Present';
+                personPresentStatus.className = 'motion-indicator motion-yes';
+            } else {
+                personPresentStatus.textContent = 'Person: None';
+                personPresentStatus.className = 'motion-indicator motion-no';
+            }
+            // Update fall status using person_fallen_by_pose
+            if (data.person_fallen_by_pose) {
+                yoloFallStatus.textContent = 'Fall: Detected';
+                yoloFallStatus.className = 'motion-indicator status-emergency'; // Use emergency style for fall
+            } else {
+                yoloFallStatus.textContent = 'Fall: None';
+                yoloFallStatus.className = 'motion-indicator motion-yes';
+            }
+        }
+        function showAlert(data) {
+            console.log('[JS] Executing showAlert with data:', data);
+            const alertBox = document.getElementById('alertBox');
+            alertBox.classList.add('active');
+            console.log('[JS] alertBox active status:', alertBox.classList.contains('active'));
+            document.getElementById('alertMessage').textContent = data.message;
+            addLog('⚠️ ' + data.message);
+            if (data.snapshot) {
+                updateSnapshot(data.snapshot);
+            }
+        }
+        function showEmergency(data) {
+            console.log('[JS] Executing showEmergency with data:', data);
+            const emergencyBox = document.getElementById('emergencyBox');
+            emergencyBox.classList.add('active');
+            console.log('[JS] emergencyBox active status:', emergencyBox.classList.contains('active'));
+            document.getElementById('emergencyMessage').textContent = data.message;
+            const motionDiv = document.getElementById('emergencyMotion');
+            if (data.person_fallen_by_pose) {
+                motionDiv.innerHTML = '<div class="motion-indicator motion-yes">✓ Fall Event Detected (YOLO)</div>';
+            } else {
+                motionDiv.innerHTML = '<div class="motion-indicator motion-no">✗ No Fall Event Detected (YOLO)</div>';
+            }
+            addLog('🚨 EMERGENCY: ' + data.message);
+            if (data.snapshot) {
+                updateSnapshot(data.snapshot);
+            }
+            // Hide alert box
+            document.getElementById('alertBox').classList.remove('active');
+        }
+        function updateMotionStatus(data) {
+            console.log('[JS] Executing updateMotionStatus with data:', data);
+            const motionDiv = document.getElementById('motionStatus');
+            // Simplified check: trust the backend's fall detection
+            if (data.person_fallen_by_pose) {
+                motionDiv.innerHTML = '<div class="motion-indicator motion-yes">✓ Fall Detected (AI)</div>';
+            } else {
+                motionDiv.innerHTML = '<div class="motion-indicator motion-no">Waiting for AI Confirmation...</div>';
+            }
+            // Update the 30-second countdown
+            // The backend sends the overall countdown in 'time_remaining_fallen_motionless'
+            const timeVal = Math.max(0, data.time_remaining_fallen_motionless);
+            document.getElementById('timeRemaining').textContent = timeVal;
+            console.log('[JS] Timer updated to:', timeVal);
+        }
+        function hideAlerts() {
+            console.log('[JS] Executing hideAlerts');
+            document.getElementById('alertBox').classList.remove('active');
+            document.getElementById('emergencyBox').classList.remove('active');
+            document.getElementById('muteButton').style.display = 'none';
+        }
+        function updateSnapshot(filename) {
+            console.log('[JS] Executing updateSnapshot with filename:', filename);
+            const container = document.getElementById('snapshotContainer');
+            container.innerHTML = '<img src="/snapshots/' + filename + '" alt="Fall Detection Snapshot">';
+        }
+        function muteSound() {
+            console.log('[JS] Mute sound requested');
+            socket.emit('mute_sound');
+        }
+        function addLog(message) {
+            // console.log('[JS] Adding log entry:', message);
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = '<div class="log-time">' + time + '</div><div>' + message + '</div>';
+            logContainer.insertBefore(logEntry, logContainer.firstChild);
+            // Keep only last 50 entries
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+        socket.on('yolo_detection_update', function(data) {
+            console.log('[SOCKET.IO] Received yolo_detection_update:', data);
+            const personPresentStatus = document.getElementById('personPresentStatus');
+            const yoloFallStatus = document.getElementById('yoloFallStatus');
+            if (data.person_detected) {
+                personPresentStatus.textContent = 'Person: Present';
+                personPresentStatus.className = 'motion-indicator motion-yes';
+            } else {
+                personPresentStatus.textContent = 'Person: None';
+                personPresentStatus.className = 'motion-indicator motion-no';
+            }
+            // Update fall status using person_fallen_by_pose
+            if (data.person_fallen_by_pose) {
+                yoloFallStatus.textContent = 'Fall: Detected';
+                yoloFallStatus.className = 'motion-indicator status-emergency'; // Use emergency style for fall
+            } else {
+                yoloFallStatus.textContent = 'Fall: None';
+                yoloFallStatus.className = 'motion-indicator motion-yes';
+            }
+        });
+    </script>
+</body>
 </html>
