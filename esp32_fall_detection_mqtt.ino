@@ -11,11 +11,11 @@
 #include <ArduinoJson.h>
 
 // ===== WiFi Configuration =====
-const char* ssid = "ADU-STEAM";
-const char* password = "YOUR_WIFI_PASSWORD_HERE";  // ⚠️ REPLACE THIS
+const char* ssid = "WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD_HERE"; 
 
 // ===== MQTT Configuration =====
-const char* mqtt_server = "10.13.101.209";
+const char* mqtt_server = "Rasp_Pi_IPAdress";
 const int mqtt_port = 1883;
 const char* mqtt_client_id = "ESP32_Fall_Detection";
 
