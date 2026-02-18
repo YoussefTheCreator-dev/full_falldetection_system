@@ -1,0 +1,11 @@
+
+picamera2
+opencv-python
+numpy
+flask
+flask-socketio
+paho-mqtt
+pygame
+ultralytics
+tflite-runtime
+lap
