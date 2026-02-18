@@ -98,11 +98,3 @@ The system follows a client-server architecture with MQTT as the central messagi
 4.  **Upload Firmware:**
     *   Select the correct ESP32 board and COM port in Arduino IDE.
     *   Compile and upload the sketch to your ESP32.
-
-## Development Conventions
-
-*   **Python Code Style:** Follows general Python best practices, including clear function definitions and comments.
-*   **Thread Safety:** Utilizes `threading.Lock` to protect shared global state variables from race conditions in a multi-threaded environment.
-*   **Error Handling:** Includes `try-except` blocks for robust handling of operations like camera initialization, MQTT communication, and motion detection.
-*   **Debugging:** Uses `print` statements with distinct prefixes (e.g., `[CAMERA]`, `[MQTT]`, `[ALERT_DEBUG]`) for logging and tracing execution flow.
-*   **Configuration:** Key parameters are externalized in `fall_detection_config.py` for easy modification.
